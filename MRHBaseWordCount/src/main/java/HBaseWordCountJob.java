@@ -72,8 +72,12 @@ public class HBaseWordCountJob extends Configured implements Tool {
             // HBase output ist analog zu Commando ein Put Objekt:
             Put put = new Put(key.getBytes());
 
-            // schreibe count in column data:count
-            put.add(Bytes.toBytes("data"), Bytes.toBytes("count"), Bytes.toBytes(count));
+            /* schreibe count in column data:count
+
+               Der count Wert wird vorher noch in einen String gewandelt, da ansonsten
+               der Output nicht "User-lesbar" ist (Binärwerte)
+             */
+            put.add(Bytes.toBytes("data"), Bytes.toBytes("count"), Bytes.toBytes(String.valueOf(count)));
 
             context.write(key, put);
         }
@@ -122,7 +126,7 @@ public class HBaseWordCountJob extends Configured implements Tool {
 
         // output table
         o = new Option("tOut", "outputTable", true,
-                "table to read from (must exist)");
+                "table to write to, must have a CF data!");
         o.setArgName("table-name");
         o.setRequired(true);
         options.addOption(o);
