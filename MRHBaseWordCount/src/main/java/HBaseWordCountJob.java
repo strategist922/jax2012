@@ -34,7 +34,7 @@ HBase Word Count Beispiel:
 
 
 public class HBaseWordCountJob extends Configured implements Tool {
-    public static final String NAME = "LetterCount";
+    public static final String NAME = "HBaseWordCount";
     public enum Counters { ROWS, ERROR, VALID }
 
     static class AnalyzeMapper extends TableMapper<Text, IntWritable> {
@@ -45,6 +45,7 @@ public class HBaseWordCountJob extends Configured implements Tool {
             context.getCounter(Counters.ROWS).increment(1);
 
             try {
+                System.out.println(cols.toString());
                 String sKey = Bytes.toString(key.get());
                 if(context.getConfiguration().get("conf.debug") != null)
                     System.out.println(sKey);
