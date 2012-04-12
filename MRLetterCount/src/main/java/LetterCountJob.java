@@ -1,3 +1,4 @@
+import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
 import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.KeyValue;
@@ -24,12 +25,14 @@ import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.mapreduce.lib.output.FileOutputFormat;
 import org.apache.hadoop.util.GenericOptionsParser;
+import org.apache.hadoop.util.Tool;
+import org.apache.hadoop.util.ToolRunner;
 import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
 
-public class LetterCountJob {
+public class LetterCountJob extends Configured implements Tool {
     public static final String NAME = "LetterCount";
     public enum Counters { ROWS, ERROR, VALID }
 
@@ -98,7 +101,7 @@ public class LetterCountJob {
         return cmd;
     }
 
-    public static void main(String[] args) throws Exception {
+    public int run(String[] args) throws Exception {
         Configuration conf = HBaseConfiguration.create();
         String[] otherArgs =
                 new GenericOptionsParser(conf, args).getRemainingArgs();
@@ -122,7 +125,12 @@ public class LetterCountJob {
         job.setNumReduceTasks(1);
         FileOutputFormat.setOutputPath(job, new Path(output));
 
-        System.exit(job.waitForCompletion(true) ? 0 : 1);
+        boolean success = job.waitForCompletion(true);
+        return success ? 0 : 1;
     }
 
+    public static void main(String[] args) throws Exception {
+        int ret = ToolRunner.run(new LetterCountJob(), args);
+        System.exit(ret);
+    }
 }
