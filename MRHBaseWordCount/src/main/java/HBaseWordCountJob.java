@@ -1,4 +1,6 @@
 import org.apache.commons.cli.*;
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.conf.Configured;
 import org.apache.hadoop.fs.Path;
@@ -39,6 +41,7 @@ public class HBaseWordCountJob extends Configured implements Tool {
 
     static class AnalyzeMapper extends TableMapper<Text, IntWritable> {
         private IntWritable ONE = new IntWritable(1);
+        private static final Log LOG = LogFactory.getLog(AnalyzeMapper.class);
 
         @Override
         protected void map(ImmutableBytesWritable key, Result cols, Context context) throws IOException {
@@ -46,6 +49,7 @@ public class HBaseWordCountJob extends Configured implements Tool {
 
             try {
                 System.out.println(cols.toString());
+                LOG.info(cols.toString());
                 String sKey = Bytes.toString(key.get());
                 if(context.getConfiguration().get("conf.debug") != null)
                     System.out.println(sKey);

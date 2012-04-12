@@ -64,7 +64,7 @@
       <file leaf-file-name="HBaseWordCountJob.java" pinned="false" current="true" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/MRHBaseWordCount/src/main/java/HBaseWordCountJob.java">
           <provider selected="true" editor-type-id="text-editor">
-            <state line="47" column="46" selection-start="1934" selection-end="1934" vertical-scroll-proportion="0.41944847">
+            <state line="49" column="36" selection-start="2051" selection-end="2051" vertical-scroll-proportion="0.41944847">
               <folding />
             </state>
           </provider>
@@ -518,7 +518,11 @@
       <created>1334243331046</created>
       <updated>1334243331046</updated>
     </task>
-    <option name="localTasksCounter" value="7" />
+    <task id="LOCAL-00007" summary="Saubere String-Ausgabe">
+      <created>1334243521719</created>
+      <updated>1334243521719</updated>
+    </task>
+    <option name="localTasksCounter" value="8" />
     <servers />
   </component>
   <component name="ToolWindowManager">
@@ -670,7 +674,7 @@
     </entry>
     <entry file="file://$PROJECT_DIR$/MRHBaseWordCount/src/main/java/HBaseWordCountJob.java">
       <provider selected="true" editor-type-id="text-editor">
-        <state line="47" column="46" selection-start="1934" selection-end="1934" vertical-scroll-proportion="0.41944847">
+        <state line="49" column="36" selection-start="2051" selection-end="2051" vertical-scroll-proportion="0.41944847">
           <folding />
         </state>
       </provider>
