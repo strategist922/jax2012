@@ -1,0 +1,7 @@
+hbase(main):001:0> scan 'dominik'
+ROW                         COLUMN+CELL                                                                  
+ DAS                        column=data:count, timestamp=1334506740138, value=12286918                   
+ DER                        column=data:count, timestamp=1334506743394, value=36958467                   
+ DIE                        column=data:count, timestamp=1334506740266, value=31021544                   
+3 row(s) in 0.6930 seconds
+
