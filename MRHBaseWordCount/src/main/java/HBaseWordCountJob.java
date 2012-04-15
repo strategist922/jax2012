@@ -1,4 +1,5 @@
 import org.apache.commons.cli.*;
+import org.apache.commons.lang.WordUtils;
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
@@ -8,6 +9,9 @@ import org.apache.hadoop.hbase.HBaseConfiguration;
 import org.apache.hadoop.hbase.client.Put;
 import org.apache.hadoop.hbase.client.Result;
 import org.apache.hadoop.hbase.client.Scan;
+import org.apache.hadoop.hbase.filter.FilterList;
+import org.apache.hadoop.hbase.filter.FirstKeyOnlyFilter;
+import org.apache.hadoop.hbase.filter.KeyOnlyFilter;
 import org.apache.hadoop.hbase.io.ImmutableBytesWritable;
 import org.apache.hadoop.hbase.mapreduce.TableMapReduceUtil;
 import org.apache.hadoop.hbase.mapreduce.TableMapper;
@@ -25,6 +29,7 @@ import org.apache.log4j.Level;
 import org.apache.log4j.Logger;
 
 import java.io.IOException;
+import java.util.StringTokenizer;
 
 /*
 HBase Word Count Beispiel:
@@ -43,6 +48,19 @@ public class HBaseWordCountJob extends Configured implements Tool {
         private IntWritable ONE = new IntWritable(1);
         private static final Log LOG = LogFactory.getLog(AnalyzeMapper.class);
 
+        private static byte[] CF_TEXT = Bytes.toBytes("text");
+        private static byte[] Q_NONE = Bytes.toBytes("");
+
+        private static String S_DER = "DER";
+        private static String S_DIE = "DIE";
+        private static String S_DAS = "DAS";
+
+        private static Text T_DER = new Text(S_DER);
+        private static Text T_DIE = new Text(S_DIE);
+        private static Text T_DAS = new Text(S_DAS);
+
+        private Text word = new Text();
+
         @Override
         protected void map(ImmutableBytesWritable key, Result cols, Context context) throws IOException {
             context.getCounter(Counters.ROWS).increment(1);
@@ -50,11 +68,23 @@ public class HBaseWordCountJob extends Configured implements Tool {
             try {
                 System.out.println(cols.toString());
                 LOG.info(cols.toString());
-                String sKey = Bytes.toString(key.get());
-                if(context.getConfiguration().get("conf.debug") != null)
-                    System.out.println(sKey);
+                String sText = Bytes.toString(cols.getValue(CF_TEXT, Q_NONE));
 
-                context.write(new Text(sKey.substring(0, 1)), ONE);
+                String token = null;
+                // primitive Implementierung:
+                StringTokenizer tokenizer = new StringTokenizer(sText);
+                while (tokenizer.hasMoreTokens()) {
+                    token = tokenizer.nextToken().toUpperCase();
+
+                    if(S_DER.equals(token)) {
+                        context.write(T_DER, ONE);
+                    } else if(S_DIE.equals(token)) {
+                        context.write(T_DIE, ONE);
+                    } else if(S_DAS.equals(token)) {
+                        context.write(T_DAS, ONE);
+                    }
+                }
+
                 context.getCounter(Counters.VALID).increment(1);
             } catch(Exception e) {
                 e.printStackTrace();
@@ -63,6 +93,24 @@ public class HBaseWordCountJob extends Configured implements Tool {
         }
     }
 
+
+    /* Optimierung der Performanz:
+
+      Wir fuehren einen Combiner ein, um die Daten noch vor dem Shuffle (herumkopieren)
+      in einer ersten Welle zu aggregieren.
+    */
+    static class CountCombiner extends Reducer<Text, IntWritable, Text, IntWritable> {
+        @Override
+        protected void reduce(Text key, Iterable<IntWritable> values, Context context) throws IOException, InterruptedException {
+            int count = 0;
+
+            for(IntWritable val: values) {
+                count += val.get();
+            }
+
+            context.write(key, new IntWritable(count));
+        }
+    }
 
     // public abstract class TableReducer<KEYIN, VALUEIN, KEYOUT>
     static class AnalyzeReducer extends TableReducer<Text, IntWritable, Text> {
@@ -99,13 +147,17 @@ public class HBaseWordCountJob extends Configured implements Tool {
         String tableIn = cmd.getOptionValue("tIn");
         String tableOut = cmd.getOptionValue("tOut");
 
-        // Scan interface defines "what we get" from HBase, here: everything!
+        // Das Scan interface definiert was wir von HBase zugeliefert haben
+        // moechten -- hier benoetigen wir nur die CF text
         Scan scan = new Scan();
+        scan.addFamily(Bytes.toBytes("text"));
 
         Job job = new Job(conf, "Analyze data in " + tableIn);
         job.setJarByClass(HBaseWordCountJob.class);
         TableMapReduceUtil.initTableMapperJob(tableIn, scan, AnalyzeMapper.class,
                 Text.class, IntWritable.class, job);
+
+        job.setCombinerClass(CountCombiner.class);
 
         TableMapReduceUtil.initTableReducerJob(tableOut,
                 AnalyzeReducer.class, job);
